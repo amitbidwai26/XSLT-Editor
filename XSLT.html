@@ -1,0 +1,217 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <title> XSLT Tool</title>
+    <script type="text/javascript">
+        function transform() {
+            document.getElementById("result").innerHTML = "";
+            var xml = document.getElementById("xml").value;
+            var xsl = document.getElementById("xsl").value;
+            var result = "XML and Query fields are required.";
+            if (xml && xsl) {
+                if (!window.ActiveXObject) {
+                    var parser = new DOMParser();
+                    xmlDoc = parser.parseFromString(xml, "text/xml");
+                    xslDoc = parser.parseFromString(xsl, "text/xml");
+                }
+                else // Internet Explorer
+                {
+                    xmlDoc = new ActiveXObject("Microsoft.XMLDOM");
+                    xmlDoc.async = "false";
+                    xmlDoc.loadXML(xml);
+
+                    xslDoc = new ActiveXObject("Microsoft.XMLDOM");
+                    xslDoc.async = "false";
+                    xslDoc.loadXML(xsl);
+                }
+
+                try {
+                    // code for IE
+                    if (window.ActiveXObject) {
+
+                        result = xmlDoc.transformNode(xslDoc);
+                        document.getElementById("result").innerHTML = result;
+                    }
+                        // code for Mozilla, Firefox, Opera, etc.
+                    else if (document.implementation && document.implementation.createDocument) {
+
+                        xsltProcessor = new XSLTProcessor();
+                        xsltProcessor.importStylesheet(xslDoc);
+                        result = xsltProcessor.transformToFragment(xmlDoc, document);
+                        document.getElementById("result").appendChild(result);
+                    }
+                }
+                catch (e) {
+                    result += e;
+                }
+
+            }
+
+        }
+    </script>
+</head>
+<body>
+    <table>
+        <tr>
+            <td>XSLT Online Tool: XML
+                <div id="xmlDiv" name="xmlDiv">
+                    <textarea rows="25" cols="80" name="xml" id="xml" style="font-size: 12px">
+<?xml version='1.0'?>
+<?xml-stylesheet type="text/xsl" href="product-list2.xsl"?>
+<graph>
+  <r  STD="4.522" RG="1.390" CP="2.943" CPK="2.812" UMV="7.68" LMV="7.51" MN="7.63" USL="7.8" LSL="7.2" CNM="Dimension B" ILCRID="1881" ILID="28">
+    <series colour="red" width="0.01" label="Series1">
+
+      <data >
+        <cordinates>
+          <X>0</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>1</X>
+          <Y>3</Y>
+        </cordinates>
+        <cordinates>
+          <X>2</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>3</X>
+          <Y>1</Y>
+        </cordinates>
+        <cordinates>
+          <X>4</X>
+          <Y>1</Y>
+        </cordinates>
+      </data>
+    </series>
+
+
+    <series type= "dashes" colour="red" width="0.01" label="Series2"  >
+      <data >
+        <cordinates>
+          <X>0.7</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>1</X>
+          <Y>3</Y>
+        </cordinates>
+        <cordinates>
+          <X>2.5</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>3</X>
+          <Y>1</Y>
+        </cordinates>
+        <cordinates>
+          <X>4.05</X>
+          <Y>1</Y>
+        </cordinates>
+      </data>
+    </series>
+
+
+    <series type="curvedLines"  colour="red" width="0.01" label="Series3">
+      <data >
+        <cordinates>
+          <X>1</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>1.1</X>
+          <Y>3</Y>
+        </cordinates>
+        <cordinates>
+          <X>2</X>
+          <Y>0</Y>
+        </cordinates>
+        <cordinates>
+          <X>4</X>
+          <Y>1</Y>
+        </cordinates>
+        <cordinates>
+          <X>5.00</X>
+          <Y>2</Y>
+        </cordinates>
+      </data>
+    </series>
+  </r>
+</graph>
+         </textarea>
+                </div>
+            </td>
+            <td>XSL
+                <div id="xslDiv" name="xslDiv">
+                    <textarea id="xsl" name="xsl" rows="25" cols="80" style="font-size: 12px">
+<?xml version='1.0'?>
+<xsl:stylesheet version="1.0"
+      xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:for-each select="graph">
+    {
+       "series" : 
+      <xsl:for-each select="r">
+        [
+        <xsl:for-each select="series">
+          {
+          <xsl:choose>
+            <xsl:when test="@type= 'bars'">
+              "label": "<xsl:value-of select="@label"/>", "data":
+              [ <xsl:for-each select="data/cordinates">
+                [       <xsl:value-of select="X"/>,<xsl:value-of select="Y"/>   ]
+                <xsl:value-of select="series"/><xsl:if test="position()!=last()">, </xsl:if>
+              </xsl:for-each>], "bars": {"show": true ,"barWidth": 0.1,"fill": true,"lineWidth": 1,"order": 1}
+            </xsl:when>
+            <xsl:when test="@type= 'curvedLines'">
+              "label": "<xsl:value-of select="@label"/>", "data":
+              [ <xsl:for-each select="data/cordinates">
+                [       <xsl:value-of select="X"/>,<xsl:value-of select="Y"/>   ]
+                <xsl:value-of select="series"/><xsl:if test="position()!=last()">, </xsl:if>
+              </xsl:for-each>],"curvedLines": { "apply": true, "fit": true }
+            </xsl:when>
+            <xsl:when test="@type= 'dashes'">
+              "label": "<xsl:value-of select="@label"/>", "data":
+              [ <xsl:for-each select="data/cordinates">
+                [       <xsl:value-of select="X"/>,<xsl:value-of select="Y"/>   ]
+                <xsl:value-of select="series"/><xsl:if test="position()!=last()">, </xsl:if>
+              </xsl:for-each>],"curvedLines": { "apply": true, "fit": true } , "dashes": { "show": true }
+            </xsl:when>
+            <xsl:otherwise>
+              "label": "<xsl:value-of select="@label"/>", "data":
+              [ <xsl:for-each select="data/cordinates">
+                [       <xsl:value-of select="X"/>,<xsl:value-of select="Y"/>   ]
+                <xsl:value-of select="series"/><xsl:if test="position()!=last()">, </xsl:if>
+              </xsl:for-each>],"lines": { "apply": true, "fit": true }
+            </xsl:otherwise>
+          </xsl:choose>
+          }
+          <xsl:if test="position()!=last()">, </xsl:if>
+        </xsl:for-each>
+        <xsl:if test="position()!=last()">, </xsl:if>
+        ]
+      </xsl:for-each>
+     , "options": { series: { curvedLines: { active: true }, Lines: { active: true } },
+                grid: { hoverable: true, clickable: true },
+                xaxis: { zoomRange: [0.1, 100], panRange: [-100, 100], show : true, axisLabel : 'X-Axis'},
+                yaxis: { zoomRange: [0.1, 100], panRange: [-100, 100], show : true, axisLabel : 'Y-Axis'},
+                zoom: { interactive: true }, pan: { interactive: true }}    
+    }
+  </xsl:for-each>
+  </xsl:template>
+</xsl:stylesheet></textarea>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <input type="button" value="Transform" onclick="transform(); return false;" />
+    Output:
+    <div id="outDiv" name="outDiv">
+        <div name="result" id="result">
+            Result will show here
+        </div>
+    </div>
+</body>
+</html>
